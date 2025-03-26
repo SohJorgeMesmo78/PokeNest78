@@ -7,38 +7,48 @@ export class PokemonService {
 
     constructor(private prismaService: PrismaService) { }
 
-    
     async GetAllPokemons() {
-        return this.prismaService.pokemon.findMany();
+        // Retorna os Pokémons ordenados por numDex, sem o campo id
+        return this.prismaService.pokemon.findMany({
+            orderBy: {
+                numDex: 'asc', // Ordenando pelo numDex em ordem crescente
+            },
+            select: {
+                numDex: true,
+                nome: true, // Retorna apenas o numDex e o nome, omitindo o id
+            },
+        });
     }
-    
+
     async GetPokemonByNumDex(numDex: number) {
         const pokemon = await this.prismaService.pokemon.findUnique({
             where: { numDex },
+            select: {
+                numDex: true,
+                nome: true, // Retorna apenas o numDex e o nome, omitindo o id
+            },
         });
-    
+
         if (!pokemon) {
             throw new UnauthorizedException('Pokémon não encontrado');
         }
-    
+
         return pokemon;
     }
-    
-    
+
     async PostPokemon(data: PokemonDto) {
-        //verificando se já tem um pokemon com aquele numero de dex
+        // Verificando se já tem um Pokémon com aquele número de dex
         const numDexExists = await this.prismaService.pokemon.findUnique({
-            where:{
+            where: {
                 numDex: data.numDex,
-            }
+            },
         });
-        if(numDexExists){
-            throw new UnauthorizedException('Este numero da dex já foi preenchido')
+        if (numDexExists) {
+            throw new UnauthorizedException('Este número da dex já foi preenchido');
         }
 
-        const res = await this.prismaService.pokemon.create({data});
-        
-        return res
-    }
+        const res = await this.prismaService.pokemon.create({ data });
 
+        return res;
+    }
 }

@@ -18,3 +18,27 @@ model Pokemon {
   numDex Int @unique
   nome String 
 }
+
+model Tipo {
+  id   Int    @id @default(autoincrement())
+  nome String @unique
+  
+  ataques  Fraqueza[] @relation("Ataques")
+  defesas  Fraqueza[] @relation("Defesas")
+}
+
+model Fraqueza {
+  id        Int    @id @default(autoincrement())
+  idAtaque  Int
+  idDefesa  Int
+  fraqueza  FraquezaEnum
+  
+  tipoAtaque Tipo @relation("Ataques", fields: [idAtaque], references: [id])
+  tipoDefesa Tipo @relation("Defesas", fields: [idDefesa], references: [id])
+}
+
+enum FraquezaEnum {
+  DESVANTAGEM  // -1
+  NEUTRO       // 0
+  VANTAGEM     // 1
+}
