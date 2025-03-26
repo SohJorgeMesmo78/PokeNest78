@@ -1,6 +1,6 @@
 export enum FraquezaEnum {
-    DESVANTAGEM = -1,
-    NEUTRO = 0,
-    VANTAGEM = 1,
-  }
-  
+  IMUNE = -10,
+  DESVANTAGEM = -1,
+  NEUTRO = 0,
+  VANTAGEM = 1,
+}
