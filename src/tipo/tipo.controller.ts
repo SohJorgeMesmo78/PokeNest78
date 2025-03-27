@@ -14,7 +14,8 @@ export class TipoController {
 
   // Endpoint para obter um tipo específico pelo ID
   @Get(':id')
-  async getTipoById(@Param('id') id: number) {
-    return await this.tipoService.getTipoById(id);
-  }
+async getTipoById(@Param('id') id: string) {
+  return this.tipoService.getTipoById(Number(id));
+}
+
 }

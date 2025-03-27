@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+
 @Injectable()
 export class TipoService {
   constructor(private prismaService: PrismaService) {}
@@ -12,6 +13,26 @@ export class TipoService {
       },
       select: {
         nome: true, // Retornando apenas o campo 'nome'
+        ataques: { // Relacionamento com 'Fraqueza' onde o tipo é o "ataque"
+          select: {
+            fraqueza: true, // Vantagens ou desvantagens
+            tipoDefesa: {
+              select: {
+                nome: true, // Nome do tipo que é a defesa
+              },
+            },
+          },
+        },
+        defesas: { // Relacionamento com 'Fraqueza' onde o tipo é a "defesa"
+          select: {
+            fraqueza: true, // Vantagens ou desvantagens
+            tipoAtaque: {
+              select: {
+                nome: true, // Nome do tipo que é o ataque
+              },
+            },
+          },
+        },
       },
     });
   }
@@ -22,6 +43,26 @@ export class TipoService {
       where: { id },
       select: {
         nome: true, // Retornando apenas o campo 'nome'
+        ataques: { // Relacionamento com 'Fraqueza' onde o tipo é o "ataque"
+          select: {
+            fraqueza: true, // Vantagens ou desvantagens
+            tipoDefesa: {
+              select: {
+                nome: true, // Nome do tipo que é a defesa
+              },
+            },
+          },
+        },
+        defesas: { // Relacionamento com 'Fraqueza' onde o tipo é a "defesa"
+          select: {
+            fraqueza: true, // Vantagens ou desvantagens
+            tipoAtaque: {
+              select: {
+                nome: true, // Nome do tipo que é o ataque
+              },
+            },
+          },
+        },
       },
     });
 
@@ -32,4 +73,5 @@ export class TipoService {
     return tipo;
   }
 
+  
 }
