@@ -11,6 +11,7 @@ model Pokemon {
   id     Int          @id @default(autoincrement())
   numDex Int          @unique
   nome   String
+  tipos  PokemonTipo[]
 }
 
 model Tipo {
@@ -18,6 +19,7 @@ model Tipo {
   nome    String      @unique
   ataques Fraqueza[]  @relation("Ataques")
   defesas Fraqueza[]  @relation("Defesas")
+  pokemons PokemonTipo[]
 }
 
 model Fraqueza {
@@ -28,4 +30,16 @@ model Fraqueza {
 
   tipoAtaque Tipo @relation("Ataques", fields: [idAtaque], references: [id])
   tipoDefesa Tipo @relation("Defesas", fields: [idDefesa], references: [id])
+}
+
+model PokemonTipo {
+  id         Int     @id @default(autoincrement())
+  pokemonId  Int
+  tipoId     Int
+  ordem      Int     // Define a ordem dos tipos
+
+  pokemon    Pokemon @relation(fields: [pokemonId], references: [id], onDelete: Cascade)
+  tipo       Tipo    @relation(fields: [tipoId], references: [id], onDelete: Cascade)
+
+  @@unique([pokemonId, tipoId]) // Evita duplicação do mesmo tipo para um Pokémon
 }

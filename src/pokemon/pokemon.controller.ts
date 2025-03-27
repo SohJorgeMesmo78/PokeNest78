@@ -1,5 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { PokemonDto } from './dtos/pokemon';
+import { Body, Controller, Get, Param } from '@nestjs/common';
 import { PokemonService } from './pokemon.service';
 
 @Controller('pokemon')
@@ -8,11 +7,6 @@ export class PokemonController {
     constructor(
         private pokemonService: PokemonService
     ) { }
-
-    @Post('')
-    async PostPokemon(@Body() body: PokemonDto) {
-        return this.pokemonService.PostPokemon(body)
-    }
 
     @Get('')
     async GetAllPokemons() {
