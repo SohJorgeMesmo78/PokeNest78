@@ -16,7 +16,6 @@ export async function fraquezaSeed() {
             return;
         }
 
-        // Criar todas as combinações de ataque e defesa com fraqueza padrão NEUTRO
         const fraquezas = tipos.flatMap((ataque) =>
             tipos.map((defesa) => ({
                 idAtaque: ataque.id,
@@ -27,7 +26,7 @@ export async function fraquezaSeed() {
 
         await prisma.fraqueza.createMany({
             data: fraquezas,
-            skipDuplicates: true, // Evita duplicatas ao rodar a seed novamente
+            skipDuplicates: true,
         });
 
         console.log('Fraquezas padrão inseridas com sucesso!');
@@ -35,7 +34,6 @@ export async function fraquezaSeed() {
 
     console.log('Ajustando fraquezas específicas...');
 
-    // Ajustar fraquezas específicas
     const ajustes = [
         //Normal
         { ataque: 'Normal', defesa: 'Pedra', fraqueza: FraquezaEnum.DESVANTAGEM },

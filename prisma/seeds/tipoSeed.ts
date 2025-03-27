@@ -3,7 +3,6 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export async function tipoSeed() {
-    // Lista com todos os tipos de Pokémon
     const tipos = [
         { nome: 'Normal' },
         { nome: 'Lutador' },

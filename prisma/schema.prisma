@@ -26,7 +26,7 @@ model Fraqueza {
   id        Int    @id @default(autoincrement())
   idAtaque  Int
   idDefesa  Int
-  fraqueza  Int   // Altere para um tipo Int
+  fraqueza  Float
 
   tipoAtaque Tipo @relation("Ataques", fields: [idAtaque], references: [id])
   tipoDefesa Tipo @relation("Defesas", fields: [idDefesa], references: [id])
@@ -36,10 +36,10 @@ model PokemonTipo {
   id         Int     @id @default(autoincrement())
   pokemonId  Int
   tipoId     Int
-  ordem      Int     // Define a ordem dos tipos
+  ordem      Int
 
   pokemon    Pokemon @relation(fields: [pokemonId], references: [id], onDelete: Cascade)
   tipo       Tipo    @relation(fields: [tipoId], references: [id], onDelete: Cascade)
 
-  @@unique([pokemonId, tipoId]) // Evita duplicação do mesmo tipo para um Pokémon
+  @@unique([pokemonId, tipoId])
 }

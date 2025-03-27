@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Fraqueza" ALTER COLUMN "fraqueza" SET DATA TYPE DOUBLE PRECISION;
