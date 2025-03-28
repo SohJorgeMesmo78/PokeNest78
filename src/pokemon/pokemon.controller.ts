@@ -13,7 +13,7 @@ export class PokemonController {
         return this.pokemonService.GetAllPokemons();
     }
 
-    @Get(':numDex')
+    @Get('getById/:numDex')
     async GetPokemonById(@Param('numDex') numDex: string) {
         return this.pokemonService.GetPokemonByNumDex(Number(numDex));
     }
