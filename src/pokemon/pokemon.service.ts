@@ -18,56 +18,55 @@ export class PokemonService {
     let pokemons: { id: number; nome: string; imagem: string; tipos: string[]; jogos: string[] }[] = [];
     const tiposSelecionados = types ? types.split(',').map(t => t.trim().toLowerCase()) : [];
     const jogosSelecionados = games ? games.split(',').map(g => g.trim().toLowerCase()) : [];
-
-    while (pokemons.length < page * limit) {
-      const url = `${this.pokeApiUrl}?offset=${offset}&limit=50`;
-      const response = await axios.get(url);
-
-      if (response.data.results.length === 0) break;
-
-      const batch = await Promise.all(
-        response.data.results.map(async (p) => {
-          const id = this.extractIdFromUrl(p.url);
-          const detalhes = await axios.get(`${this.pokeApiUrl}/${id}`);
-
-          const tipos = detalhes.data.types.map((t) => {
-            return TipoPokemon[t.type.name.toUpperCase()] || t.type.name;
-          });
-
-          const jogos = detalhes.data.game_indices.map((g) => g.version.name.toLowerCase());
-
-          return {
-            id,
-            nome: p.name,
-            imagem: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`,
-            tipos,
-            jogos,
-          };
-        }),
-      );
-
-      const filtrados = batch.filter(p => {
-        if (name && !p.nome.includes(name.toLowerCase())) return false;
-        if (types && !tiposSelecionados.every(tipo => p.tipos.map(t => t.toLowerCase()).includes(tipo))) return false;
-        if (games && !jogosSelecionados.some(jogo => p.jogos.includes(jogo))) return false;
-
-        return true;
-      });
-
-      pokemons.push(...filtrados);
-      offset += 50;
+  
+    const url = `${this.pokeApiUrl}?offset=${offset}&limit=10000`;
+    const response = await axios.get(url);
+  
+    if (response.data.results.length === 0) {
+      return { pagina: page, total: 0, pokemons: [] };
     }
-
-    const total = pokemons.length;
-
-    pokemons = pokemons.slice((page - 1) * limit, page * limit);
-
+  
+    const batch = await Promise.all(
+      response.data.results.map(async (p) => {
+        const id = this.extractIdFromUrl(p.url);
+        const detalhes = await axios.get(`${this.pokeApiUrl}/${id}`);
+  
+        const tipos = detalhes.data.types.map((t) => {
+          return TipoPokemon[t.type.name.toUpperCase()] || t.type.name;
+        });
+  
+        const jogos = detalhes.data.game_indices.map((g) => g.version.name.toLowerCase());
+  
+        return {
+          id,
+          nome: p.name,
+          imagem: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`,
+          tipos,
+          jogos,
+        };
+      }),
+    );
+  
+    // Aplicar os filtros
+    const filtrados = batch.filter(p => {
+      if (name && !p.nome.includes(name.toLowerCase())) return false;
+      if (types && !tiposSelecionados.every(tipo => p.tipos.map(t => t.toLowerCase()).includes(tipo))) return false;
+      if (games && !jogosSelecionados.some(jogo => p.jogos.includes(jogo))) return false;
+  
+      return true;
+    });
+  
+    // Paginação no servidor
+    const total = filtrados.length;
+    const paginatedPokemons = filtrados.slice((page - 1) * limit, page * limit);
+  
     return {
       pagina: page,
       total,
-      pokemons,
+      pokemons: paginatedPokemons,
     };
   }
+  
 
   async getPokemonByIdOrName(identifier: string | number) {
     const url = `${this.pokeApiUrl}/${identifier}`;
