@@ -42,7 +42,7 @@ export class PokemonService {
             nome: p.name,
             imagem: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`,
             tipos,
-            jogos, // Adicionando a lista de jogos
+            jogos,
           };
         }),
       );
@@ -72,31 +72,30 @@ export class PokemonService {
     };
   }
 
-
   async getPokemonByIdOrName(identifier: string | number) {
     const url = `${this.pokeApiUrl}/${identifier}`;
-
+  
     try {
       const response = await axios.get(url);
-
+  
       if (!response || !response.data) {
         throw new Error('Pokémon não encontrado');
       }
-
+  
       const data = response.data;
-
+  
       const tipos = data.types.map((t) => ({
         nome: TipoPokemon[t.type.name as keyof typeof TipoPokemon] || t.type.name
       }));
-
+  
       const tiposPossiveis = Object.values(TipoPokemon);
-
+  
       const relacoesDosTipos = await Promise.all(
         data.types.map(async (t) => await this.tipoService.getRelacoesDoTipo(t.type.name))
       );
-
+  
       const relacoesCombinadas = new Map<string, number>();
-
+  
       relacoesDosTipos.forEach((relacoes) => {
         ['vantagens', 'desvantagens', 'resistencias', 'imunidades'].forEach((categoria) => {
           relacoes[categoria].forEach((tipo: string) => {
@@ -104,7 +103,7 @@ export class PokemonService {
               categoria === 'desvantagens' ? 2 :
                 categoria === 'resistencias' ? 0.5 :
                   categoria === 'imunidades' ? 0 : 1;
-
+  
             if (relacoesCombinadas.has(tipo)) {
               relacoesCombinadas.set(tipo, relacoesCombinadas.get(tipo)! * fator);
             } else {
@@ -113,23 +112,26 @@ export class PokemonService {
           });
         });
       });
-
+  
       tiposPossiveis.forEach((tipo) => {
         if (!relacoesCombinadas.has(tipo)) {
           relacoesCombinadas.set(tipo, 1);
         }
       });
-
+  
       const resistenciasFinal = Array.from(relacoesCombinadas.entries()).map(([nome, vantagem]) => ({
         nome,
         vantagem
       }));
-
+  
       const speciesResponse = await axios.get(data.species.url);
       const evolutionChainUrl = speciesResponse.data.evolution_chain.url;
-
+  
       const evolutionChain = await this.evolucaoService.obterLinhaEvolutiva(evolutionChainUrl);
-
+  
+      // Aqui você obtém os jogos onde o Pokémon aparece
+      const jogos = data.game_indices.map((g) => g.version.name.toLowerCase());
+  
       return {
         id: data.id,
         nome: data.name,
@@ -147,12 +149,14 @@ export class PokemonService {
         },
         resistencias: resistenciasFinal,
         linha_evolutiva: evolutionChain,
+        jogos,
       };
     } catch (error) {
       console.error(`Erro ao buscar Pokémon: ${error.message}`);
       throw new Error(`Erro ao buscar Pokémon com identificador: ${identifier}`);
     }
   }
+  
 
   async searchPokemons(name: string) {
     try {
