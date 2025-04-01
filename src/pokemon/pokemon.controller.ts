@@ -11,9 +11,11 @@ export class PokemonController {
         @Query('limit') limit = 10,
         @Query('name') name?: string,
         @Query('types') types?: string,
+        @Query('games') games?: string,
     ) {
-        return this.pokemonService.getPokemons(Number(page), Number(limit), name, types);
+        return this.pokemonService.getPokemons(Number(page), Number(limit), name, types, games);
     }
+
 
     @Get('search')
     async searchPokemons(@Query('name') name: string) {
