@@ -17,8 +17,8 @@ export class PokemonService {
     const tiposSelecionados = types ? types.split(',').map(t => t.trim().toLowerCase()) : [];
     const jogosSelecionados = games ? games.split(',').map(g => g.trim().toLowerCase()) : [];
 
-    const url = `${this.pokeApiUrl}?limit=${limit}&offset=${(page - 1) * limit}`;
-    console.log(url);
+    // A URL agora não tem a paginação, pois vamos pegar todos os Pokémons
+    const url = `${this.pokeApiUrl}?limit=1000`; // Pega mais de 1000 para garantir que traga todos os Pokémons
     const response = await axios.get(url);
 
     const total = response.data.count;
@@ -27,6 +27,7 @@ export class PokemonService {
       return { pagina: page, total, pokemons: [] };
     }
 
+    // Buscar os detalhes de todos os Pokémons
     const batch = await Promise.all(
       response.data.results.map(async (p) => {
         const id = this.extractIdFromUrl(p.url);
@@ -45,9 +46,10 @@ export class PokemonService {
           tipos,
           jogos,
         };
-      }),
+      })
     );
 
+    // Aplicar os filtros (nome, tipos e jogos) antes de aplicar a paginação
     const filtrados = batch.filter(p => {
       if (name && !p.nome.toLowerCase().includes(name.toLowerCase())) return false;
       if (types && !tiposSelecionados.every(tipo => p.tipos.map(t => t.toLowerCase()).includes(tipo))) return false;
@@ -55,13 +57,15 @@ export class PokemonService {
       return true;
     });
 
+    // Agora que já temos os Pokémons filtrados, aplicamos a paginação
+    const paginados = filtrados.slice((page - 1) * limit, page * limit);
+
     return {
       pagina: page,
-      total,
-      pokemons: filtrados,
+      total, // Total de pokémons disponíveis
+      pokemons: paginados, // Pokémons após a filtragem e paginação
     };
-}
-
+  }
 
   async getPokemonByIdOrName(identifier: string | number) {
     const url = `${this.pokeApiUrl}/${identifier}`;
