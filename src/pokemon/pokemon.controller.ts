@@ -11,9 +11,11 @@ export class PokemonController {
         @Query('limit') limit = 10,
         @Query('name') name?: string,
         @Query('types') types?: string,
+        @Query('games') games?: string, // Corrigido aqui para garantir que games é passado para o serviço
     ) {
-        return this.pokemonService.getPokemons(Number(page), Number(limit), name, types);
+        return this.pokemonService.getPokemons(Number(page), Number(limit), name, types, games); // Agora o games é enviado
     }
+
 
 
     // 🔥 Mudei essa rota para vir ANTES da de ID
