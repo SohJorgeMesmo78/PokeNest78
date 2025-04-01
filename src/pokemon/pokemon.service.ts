@@ -16,17 +16,17 @@ export class PokemonService {
   async getPokemons(page: number = 1, limit: number = 10) {
     const offset = (page - 1) * limit;
     const url = `${this.pokeApiUrl}?offset=${offset}&limit=${limit}`;
-  
+
     const response = await axios.get(url);
     const pokemons = await Promise.all(
       response.data.results.map(async (p) => {
         const id = this.extractIdFromUrl(p.url);
         const detalhes = await axios.get(`${this.pokeApiUrl}/${id}`);
-  
+
         const tipos = detalhes.data.types.map((t) => {
           return TipoPokemon[t.type.name.toUpperCase()] || t.type.name;
         });
-  
+
         return {
           id,
           nome: p.name,
@@ -35,34 +35,39 @@ export class PokemonService {
         };
       }),
     );
-  
+
     return {
       pagina: page,
       total: response.data.count,
       pokemons,
     };
   }
-  
+
 
   async getPokemonByIdOrName(identifier: string | number) {
     const url = `${this.pokeApiUrl}/${identifier}`;
-  
+
     try {
       const response = await axios.get(url);
+
+      if (!response || !response.data) {
+        throw new Error('Pokémon não encontrado');
+      }
+
       const data = response.data;
-  
+
       const tipos = data.types.map((t) => ({
         nome: TipoPokemon[t.type.name as keyof typeof TipoPokemon] || t.type.name
       }));
-  
+
       const tiposPossiveis = Object.values(TipoPokemon);
-  
+
       const relacoesDosTipos = await Promise.all(
         data.types.map(async (t) => await this.tipoService.getRelacoesDoTipo(t.type.name))
       );
-  
+
       const relacoesCombinadas = new Map<string, number>();
-  
+
       relacoesDosTipos.forEach((relacoes) => {
         ['vantagens', 'desvantagens', 'resistencias', 'imunidades'].forEach((categoria) => {
           relacoes[categoria].forEach((tipo: string) => {
@@ -70,7 +75,7 @@ export class PokemonService {
               categoria === 'desvantagens' ? 2 :
                 categoria === 'resistencias' ? 0.5 :
                   categoria === 'imunidades' ? 0 : 1;
-  
+
             if (relacoesCombinadas.has(tipo)) {
               relacoesCombinadas.set(tipo, relacoesCombinadas.get(tipo)! * fator);
             } else {
@@ -79,23 +84,23 @@ export class PokemonService {
           });
         });
       });
-  
+
       tiposPossiveis.forEach((tipo) => {
         if (!relacoesCombinadas.has(tipo)) {
           relacoesCombinadas.set(tipo, 1);
         }
       });
-  
+
       const resistenciasFinal = Array.from(relacoesCombinadas.entries()).map(([nome, vantagem]) => ({
         nome,
         vantagem
       }));
-  
+
       const speciesResponse = await axios.get(data.species.url);
       const evolutionChainUrl = speciesResponse.data.evolution_chain.url;
-  
+
       const evolutionChain = await this.evolucaoService.obterLinhaEvolutiva(evolutionChainUrl);
-  
+
       return {
         id: data.id,
         nome: data.name,
@@ -115,10 +120,61 @@ export class PokemonService {
         linha_evolutiva: evolutionChain,
       };
     } catch (error) {
-      throw new Error('Pokémon não encontrado');
+      console.error(`Erro ao buscar Pokémon: ${error.message}`);
+      throw new Error(`Erro ao buscar Pokémon com identificador: ${identifier}`);
     }
   }
-  
+
+  async searchPokemons(name: string) {
+    try {
+      const url = `${this.pokeApiUrl}?limit=1000`;
+      const response = await axios.get(url);
+      const pokemons = response.data.results;
+
+      // Filtrando os Pokémon cujo nome contém a string buscada
+      const matchingPokemons = pokemons.filter((p) =>
+        p.name.toLowerCase().includes(name.toLowerCase())
+      );
+
+      if (matchingPokemons.length === 0) {
+        return [];
+      }
+
+      // Obtendo detalhes apenas dos Pokémon encontrados
+      const pokemonsDetalhados = await Promise.all(
+        matchingPokemons.map(async (p) => {
+          try {
+            const id = this.extractIdFromUrl(p.url);
+            const detalhes = await axios.get(`${this.pokeApiUrl}/${id}`);
+
+            if (!detalhes || !detalhes.data) {
+              throw new Error(`Detalhes não encontrados para ${p.name}`);
+            }
+
+            const tipos = detalhes.data.types.map((t) => {
+              return TipoPokemon[t.type.name.toUpperCase()] || t.type.name;
+            });
+
+            return {
+              id,
+              nome: p.name,
+              imagem: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`,
+              tipos,
+            };
+          } catch (error) {
+            console.error(`Erro ao buscar detalhes de ${p.name}: ${error.message}`);
+            return null; // Evita interromper a execução se um Pokémon der erro
+          }
+        })
+      );
+
+      return pokemonsDetalhados.filter((p) => p !== null);
+    } catch (error) {
+      console.error(`Erro ao buscar Pokémon: ${error.message}`);
+      throw new Error('Erro ao buscar Pokémon');
+    }
+  }
+
 
 
   private extractIdFromUrl(url: string): string {
