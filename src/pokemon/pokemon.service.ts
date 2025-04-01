@@ -13,11 +13,9 @@ export class PokemonService {
     private readonly evolucaoService: EvolucaoService,
   ) { }
 
-  async getPokemons(page: number = 1, limit: number = 10, name?: string, types?: string, games?: string) {
+  async getPokemons(page: number = 1, limit: number = 10, name?: string, types?: string) {
     let offset = 0;
-    let pokemons: { id: number; nome: string; imagem: string; tipos: string[]; jogos: string[] }[] = [];
     const tiposSelecionados = types ? types.split(',').map(t => t.trim().toLowerCase()) : [];
-    const jogosSelecionados = games ? games.split(',').map(g => g.trim().toLowerCase()) : [];
   
     const url = `${this.pokeApiUrl}?offset=${offset}&limit=10000`;
     const response = await axios.get(url);
@@ -35,14 +33,11 @@ export class PokemonService {
           return TipoPokemon[t.type.name.toUpperCase()] || t.type.name;
         });
   
-        const jogos = detalhes.data.game_indices.map((g) => g.version.name.toLowerCase());
-  
         return {
           id,
           nome: p.name,
           imagem: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`,
           tipos,
-          jogos,
         };
       }),
     );
@@ -51,7 +46,6 @@ export class PokemonService {
     const filtrados = batch.filter(p => {
       if (name && !p.nome.includes(name.toLowerCase())) return false;
       if (types && !tiposSelecionados.every(tipo => p.tipos.map(t => t.toLowerCase()).includes(tipo))) return false;
-      if (games && !jogosSelecionados.some(jogo => p.jogos.includes(jogo))) return false;
   
       return true;
     });
@@ -125,8 +119,6 @@ export class PokemonService {
 
       const evolutionChain = await this.evolucaoService.obterLinhaEvolutiva(evolutionChainUrl);
 
-      const jogos = data.game_indices.map((g) => g.version.name.toLowerCase());
-
       return {
         id: data.id,
         nome: data.name,
@@ -144,7 +136,6 @@ export class PokemonService {
         },
         resistencias: resistenciasFinal,
         linha_evolutiva: evolutionChain,
-        jogos,
       };
     } catch (error) {
       console.error(`Erro ao buscar Pokémon: ${error.message}`);
