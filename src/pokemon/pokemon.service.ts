@@ -13,32 +13,53 @@ export class PokemonService {
     private readonly evolucaoService: EvolucaoService,
   ) { }
 
-  async getPokemons(page: number = 1, limit: number = 10) {
-    const offset = (page - 1) * limit;
-    const url = `${this.pokeApiUrl}?offset=${offset}&limit=${limit}`;
+  async getPokemons(page: number = 1, limit: number = 10, name?: string, types?: string) {
+    let offset = 0;
+    let pokemons: { id: number; nome: string; imagem: string; tipos: string[] }[] = []; // <-- Adicionamos a tipagem
+    const tiposSelecionados = types ? types.split(',').map(t => t.trim().toLowerCase()) : [];
 
-    const response = await axios.get(url);
-    const pokemons = await Promise.all(
-      response.data.results.map(async (p) => {
-        const id = this.extractIdFromUrl(p.url);
-        const detalhes = await axios.get(`${this.pokeApiUrl}/${id}`);
+    while (pokemons.length < page * limit) {
+      const url = `${this.pokeApiUrl}?offset=${offset}&limit=50`; // Buscar em lotes menores
+      const response = await axios.get(url);
 
-        const tipos = detalhes.data.types.map((t) => {
-          return TipoPokemon[t.type.name.toUpperCase()] || t.type.name;
-        });
+      if (response.data.results.length === 0) break; // Se não houver mais Pokémon, parar
 
-        return {
-          id,
-          nome: p.name,
-          imagem: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`,
-          tipos,
-        };
-      }),
-    );
+      const batch = await Promise.all(
+        response.data.results.map(async (p) => {
+          const id = this.extractIdFromUrl(p.url);
+          const detalhes = await axios.get(`${this.pokeApiUrl}/${id}`);
+
+          const tipos = detalhes.data.types.map((t) => {
+            return TipoPokemon[t.type.name.toUpperCase()] || t.type.name;
+          });
+
+          return {
+            id,
+            nome: p.name,
+            imagem: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`,
+            tipos,
+          };
+        }),
+      );
+
+      // **Filtragem imediata**
+      const filtrados = batch.filter(p => {
+        if (name && !p.nome.includes(name.toLowerCase())) return false;
+        if (types && !tiposSelecionados.every(tipo => p.tipos.map(t => t.toLowerCase()).includes(tipo))) return false;
+        return true;
+      });
+
+      pokemons.push(...filtrados); // **Agora o TypeScript reconhece o tipo corretamente**
+      offset += 50;
+    }
+
+    // **Cortar para manter apenas os da página solicitada**
+    const total = pokemons.length;
+    pokemons = pokemons.slice((page - 1) * limit, page * limit);
 
     return {
       pagina: page,
-      total: response.data.count,
+      total,
       pokemons,
     };
   }

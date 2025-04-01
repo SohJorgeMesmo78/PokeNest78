@@ -6,9 +6,15 @@ export class PokemonController {
     constructor(private readonly pokemonService: PokemonService) { }
 
     @Get()
-    async getPokemons(@Query('page') page = 1, @Query('limit') limit = 10) {
-        return this.pokemonService.getPokemons(Number(page), Number(limit));
+    async getPokemons(
+        @Query('page') page = 1,
+        @Query('limit') limit = 10,
+        @Query('name') name?: string,
+        @Query('types') types?: string,
+    ) {
+        return this.pokemonService.getPokemons(Number(page), Number(limit), name, types);
     }
+
 
     // 🔥 Mudei essa rota para vir ANTES da de ID
     @Get('search')
