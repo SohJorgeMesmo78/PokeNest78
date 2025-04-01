@@ -11,14 +11,11 @@ export class PokemonController {
         @Query('limit') limit = 10,
         @Query('name') name?: string,
         @Query('types') types?: string,
-        @Query('games') games?: string, // Corrigido aqui para garantir que games é passado para o serviço
+        @Query('games') games?: string,
     ) {
-        return this.pokemonService.getPokemons(Number(page), Number(limit), name, types, games); // Agora o games é enviado
+        return this.pokemonService.getPokemons(Number(page), Number(limit), name, types, games);
     }
 
-
-
-    // 🔥 Mudei essa rota para vir ANTES da de ID
     @Get('search')
     async searchPokemons(@Query('name') name: string) {
         return this.pokemonService.searchPokemons(name);

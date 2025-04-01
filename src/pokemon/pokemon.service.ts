@@ -34,7 +34,6 @@ export class PokemonService {
             return TipoPokemon[t.type.name.toUpperCase()] || t.type.name;
           });
 
-          // Pegando os jogos onde esse Pokémon aparece
           const jogos = detalhes.data.game_indices.map((g) => g.version.name.toLowerCase());
 
           return {
@@ -51,7 +50,6 @@ export class PokemonService {
         if (name && !p.nome.includes(name.toLowerCase())) return false;
         if (types && !tiposSelecionados.every(tipo => p.tipos.map(t => t.toLowerCase()).includes(tipo))) return false;
 
-        // Verifica se o Pokémon aparece em pelo menos um dos jogos selecionados
         if (games && !jogosSelecionados.some(jogo => p.jogos.includes(jogo))) return false;
 
         return true;
@@ -61,7 +59,6 @@ export class PokemonService {
       offset += 50;
     }
 
-    // **Cortar para manter apenas os da página solicitada**
     const total = pokemons.length;
     pokemons = pokemons.slice((page - 1) * limit, page * limit);
 
@@ -129,7 +126,6 @@ export class PokemonService {
   
       const evolutionChain = await this.evolucaoService.obterLinhaEvolutiva(evolutionChainUrl);
   
-      // Aqui você obtém os jogos onde o Pokémon aparece
       const jogos = data.game_indices.map((g) => g.version.name.toLowerCase());
   
       return {
@@ -164,7 +160,6 @@ export class PokemonService {
       const response = await axios.get(url);
       const pokemons = response.data.results;
 
-      // Filtrando os Pokémon cujo nome contém a string buscada
       const matchingPokemons = pokemons.filter((p) =>
         p.name.toLowerCase().includes(name.toLowerCase())
       );
@@ -173,7 +168,6 @@ export class PokemonService {
         return [];
       }
 
-      // Obtendo detalhes apenas dos Pokémon encontrados
       const pokemonsDetalhados = await Promise.all(
         matchingPokemons.map(async (p) => {
           try {
@@ -196,7 +190,7 @@ export class PokemonService {
             };
           } catch (error) {
             console.error(`Erro ao buscar detalhes de ${p.name}: ${error.message}`);
-            return null; // Evita interromper a execução se um Pokémon der erro
+            return null;
           }
         })
       );
