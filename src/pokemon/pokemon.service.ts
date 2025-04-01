@@ -49,7 +49,6 @@ export class PokemonService {
       const filtrados = batch.filter(p => {
         if (name && !p.nome.includes(name.toLowerCase())) return false;
         if (types && !tiposSelecionados.every(tipo => p.tipos.map(t => t.toLowerCase()).includes(tipo))) return false;
-
         if (games && !jogosSelecionados.some(jogo => p.jogos.includes(jogo))) return false;
 
         return true;
@@ -60,6 +59,7 @@ export class PokemonService {
     }
 
     const total = pokemons.length;
+
     pokemons = pokemons.slice((page - 1) * limit, page * limit);
 
     return {
@@ -71,28 +71,28 @@ export class PokemonService {
 
   async getPokemonByIdOrName(identifier: string | number) {
     const url = `${this.pokeApiUrl}/${identifier}`;
-  
+
     try {
       const response = await axios.get(url);
-  
+
       if (!response || !response.data) {
         throw new Error('Pokémon não encontrado');
       }
-  
+
       const data = response.data;
-  
+
       const tipos = data.types.map((t) => ({
         nome: TipoPokemon[t.type.name as keyof typeof TipoPokemon] || t.type.name
       }));
-  
+
       const tiposPossiveis = Object.values(TipoPokemon);
-  
+
       const relacoesDosTipos = await Promise.all(
         data.types.map(async (t) => await this.tipoService.getRelacoesDoTipo(t.type.name))
       );
-  
+
       const relacoesCombinadas = new Map<string, number>();
-  
+
       relacoesDosTipos.forEach((relacoes) => {
         ['vantagens', 'desvantagens', 'resistencias', 'imunidades'].forEach((categoria) => {
           relacoes[categoria].forEach((tipo: string) => {
@@ -100,7 +100,7 @@ export class PokemonService {
               categoria === 'desvantagens' ? 2 :
                 categoria === 'resistencias' ? 0.5 :
                   categoria === 'imunidades' ? 0 : 1;
-  
+
             if (relacoesCombinadas.has(tipo)) {
               relacoesCombinadas.set(tipo, relacoesCombinadas.get(tipo)! * fator);
             } else {
@@ -109,25 +109,25 @@ export class PokemonService {
           });
         });
       });
-  
+
       tiposPossiveis.forEach((tipo) => {
         if (!relacoesCombinadas.has(tipo)) {
           relacoesCombinadas.set(tipo, 1);
         }
       });
-  
+
       const resistenciasFinal = Array.from(relacoesCombinadas.entries()).map(([nome, vantagem]) => ({
         nome,
         vantagem
       }));
-  
+
       const speciesResponse = await axios.get(data.species.url);
       const evolutionChainUrl = speciesResponse.data.evolution_chain.url;
-  
+
       const evolutionChain = await this.evolucaoService.obterLinhaEvolutiva(evolutionChainUrl);
-  
+
       const jogos = data.game_indices.map((g) => g.version.name.toLowerCase());
-  
+
       return {
         id: data.id,
         nome: data.name,
@@ -152,7 +152,7 @@ export class PokemonService {
       throw new Error(`Erro ao buscar Pokémon com identificador: ${identifier}`);
     }
   }
-  
+
 
   async searchPokemons(name: string) {
     try {
